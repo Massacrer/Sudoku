@@ -86,7 +86,6 @@ class Node {
 
 class HeaderNode extends Node {
 	public SolutionPart solutionPartIdentifier;
-	public int size;
 	
 	public HeaderNode(Node head, SolutionPart part) {
 		super(head);
