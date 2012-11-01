@@ -8,6 +8,8 @@ class Initialiser {
 	public static void initialise(List<List<Integer>> grid) {
 		initHeaders();
 		linkConstraints();
+		ConstraintHolder.free(); // Free a bit of memory by removing constraint
+									// framework
 		// TODO: insert calls to DLX cover method here, to remove existing
 		// numbers
 	}
@@ -37,52 +39,88 @@ class Initialiser {
 		}
 	}
 	
-	// Initialise all constraints - link each RCV with the constraints it
-	// fulfils by creation of a node at the point of intersection
-	public static void linkConstraints() {
+	static class ConstraintHolder {
 		// Create temporary array as a framework to hold constraints
 		/*
 		 * Layout: 0: Cells(81), 1: Rows(81), 2: Columns(81), 3: Boxes(81)
-		 * 
-		 * For each 81, index is determined by 9c + r. Note: columns and rows
-		 * are indexed 0 - 8. Overall index = (81 x section) + (9 x row) +
-		 * column
 		 */
-		SparseArray<Node> arr = new SparseArray<Node>(324);
+		public static SparseArray<Node> arr;
+		
+		static {
+			arr = new SparseArray<Node>(324);
+		}
+		
+		public static void free() {
+			arr = null;
+		}
+	}
+	
+	// Initialise all constraints - link each RCV with the constraints it
+	// fulfils by creation of a node at the point of intersection
+	public static void linkConstraints() {
 		// Link constraints to solutions (solutions = header rows, constraints =
 		// numbered entries in arr
-		for (int r = 1; r <= 9; r++) {
-			for (int c = 1; c <= 9; c++) {
-				for (int v = 1; v <= 9; v++) {
-					
+		Node header = HeaderNode.nodes.get(0);
+		for (int r = 0; r < 9; r++) {
+			for (int c = 0; c < 9; c++) {
+				for (int v = 0; v < 9; v++) {
+					Node[] nodes = get4((HeaderNode) header);
+					// Insert nodes into their proper constraints
+					// First node: cell
+					link(nodes[0], 0 * 9 * 9 + 9 * r + c);
+					// Second: row
+					link(nodes[1], 1 * 9 * 9 + 9 * r + v);
+					// Third: column
+					link(nodes[2], 2 * 9 * 9 + 9 * c + v);
+					// Fourth: box
+					// Note: using integer division to get floor(r/3) etc.
+					// easily
+					// TODO: make sure this cluster of a calculation works as
+					// expected in final impl. Unit testing indicates success.
+					link(nodes[3], 3 * 9 * 9 + (9 * (3 * (r / 3) + (c / 3)))
+							+ (v + 1));
+					header = header.right;
 				}
 			}
 		}
 	}
 	
-	// Returns 5 Nodes, vertically linked (all belong to the same solution part)
-	private static Node[] get5(HeaderNode head) {
-		Node[] nodes = new Node[5];
-		for (int i = 0; i < 5; i++) {
+	// Called from initConstraints(), maps a node to the constraint it covers
+	private static void link(Node node, int constraint) {
+		Node nodeAtConstraint = ConstraintHolder.arr.get(constraint);
+		if (nodeAtConstraint == null) {
+			// This is the first node in this constraint, simply add it to the
+			// array and return, no need for mapping
+			ConstraintHolder.arr.put(constraint, node);
+			return;
+		} else {
+			// Due to order of calls from linkConstraints(), current node will
+			// always be rightmost
+			// Insert node into grid
+			node.right = nodeAtConstraint;
+			node.left = node.right.left;
+			node.right.left = node;
+			node.left.right = node;
+		}
+	}
+	
+	// Returns 4 Nodes, vertically linked (all belong to the same solution part)
+	private static Node[] get4(HeaderNode head) {
+		Node[] nodes = new Node[4];
+		for (int i = 0; i < 4; i++) {
 			nodes[i] = new Node(head);
 		}
-		for (int i = 1; i < 4; i++) {
+		for (int i = 1; i < 3; i++) {
 			nodes[i].up = nodes[i - 1];
 			nodes[i].down = nodes[i + 1];
 		}
 		nodes[0].down = nodes[1];
-		nodes[5].up = nodes[4];
+		nodes[4].up = nodes[3];
 		// Note: circular linking includes header nodes for some reason
 		// TODO: find out while less tired
 		nodes[0].up = head;
-		nodes[5].down = head;
+		nodes[4].down = head;
 		return nodes;
-	}
-	
-	// Called from initConstraints(), sets up a single mapping of an RCV (header
-	// node) to the constraints it covers
-	private static void link(int row, int column, int value) {
-		
 	}
 	
 	// Given the full 729x324 sparse grid, remove given numbers as possibilities

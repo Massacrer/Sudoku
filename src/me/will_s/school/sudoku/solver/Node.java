@@ -46,7 +46,7 @@ class Node {
 }
 
 class HeaderNode extends Node {
-	public static List<Node> nodes = new ArrayList<Node>(730);
+	public static List<HeaderNode> nodes = new ArrayList<HeaderNode>(730);
 	public SolutionPart solutionPartId;
 	
 	protected HeaderNode() {
