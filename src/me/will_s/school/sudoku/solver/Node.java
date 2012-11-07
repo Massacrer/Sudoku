@@ -1,10 +1,10 @@
+// SudokuSolver by Will Shelver
 package me.will_s.school.sudoku.solver;
 
 import java.util.ArrayList;
 import java.util.List;
 
 class Node {
-	public static List<Node> nodes = new ArrayList<Node>();
 	public HeaderNode head;
 	public Node up;
 	public Node down;
@@ -14,18 +14,19 @@ class Node {
 	// Constructor time
 	// TODO: implement as few constructors as possible
 	
+	// Ensure all callers set this.head
 	protected Node() {
-		this.head = RootNode.get();
+		this.head = null;
 		this.up = this;
 		this.down = this;
 		this.left = this;
 		this.right = this;
-		Node.nodes.add(this);
 	}
 	
 	public Node(HeaderNode head) {
 		this();
 		this.head = head;
+		head.size++;
 	}
 	
 	// TODO: Possibly unnecessary, review after init code complete
@@ -46,8 +47,8 @@ class Node {
 }
 
 class HeaderNode extends Node {
-	public static List<HeaderNode> nodes = new ArrayList<HeaderNode>(730);
 	public SolutionPart solutionPartId;
+	public int size;
 	
 	protected HeaderNode() {
 		super();
@@ -60,30 +61,31 @@ class HeaderNode extends Node {
 		this.up = this;
 		this.down = this;
 		this.solutionPartId = part;
-		HeaderNode.nodes.add(this);
+		this.size = 0;
 	}
 }
 
 class RootNode extends HeaderNode {
-	private static RootNode root;
 	
-	// Creates the One True RootNode
-	static {
-		root = new RootNode();
-	}
-	
-	// Private constructor ensures no rogue RootNodes are floating around for
-	// whatever reason
-	private RootNode() {
+	RootNode() {
 		this.head = this;
 		this.up = this;
 		this.down = this;
 		this.left = this;
 		this.right = this;
 		this.solutionPartId = null;
+		this.size = 0;
 	}
+}
+
+class NodeManager {
+	RootNode root;
+	List<HeaderNode> headers;
+	List<Node> nodes;
 	
-	public static RootNode get() {
-		return RootNode.root;
+	public NodeManager() {
+		root = new RootNode();
+		headers = new ArrayList<HeaderNode>(729);
+		nodes = new ArrayList<Node>();
 	}
 }

@@ -5,18 +5,74 @@ import java.util.List;
 
 //TODO: javadoc comments
 
-public class Solver {
-	// List of nodes, used as strong reference to nodes to prevent garbage
-	// collection
-	// Note: nodes[0] is root, nodes[1] to [729] will contain the header nodes
-	// Removed - refer to Node, HeaderNode & RootNode for strong ref lists
+class Solver {
+	private RootNode rootNode;
+	private List<List<Integer>>[] grids;
+	private Thread solverThread;
 	
-	// Public-facing method. Note: argument subject to change in type, passed in
-	// by UI-level code.
-	// Settling on List<List<Integer>> for now.
-	public static void solve(List<List<Integer>> grid) {
-		Initialiser.initialise(grid);
-		// DLX goes here
+	public static SolverThread solve(List<List<Integer>> grid) {
+		// run solver in new thread, return solver
+		SolverThread solverThread = new SolverThread(grid);
+		solverThread.start();
+		return solverThread;
+	}
+	
+	public Thread getSolverThread() {
+		return this.solverThread;
+	}
+	
+	private Solver(List<List<Integer>> grid) {
+		grids = null;
+		rootNode = Initialiser.initialise(grid);
+		return;
+	}
+	
+	// Do not call from main (UI) thread
+	private List<List<Integer>>[] solve() {
+		List<List<Integer>>[] result = DancingLinks.solve(rootNode);
+		return result;
+	}
+	
+	private void setResult(List<List<Integer>>[] grids) {
+		synchronized (this.grids) {
+			this.grids = grids;
+		}
+		// In case of thread blocking, wake up other threads (probably UI) after
+		// assignment is complete
+		this.grids.notifyAll();
+	}
+	
+	public List<List<Integer>>[] getResult() {
+		List<List<Integer>>[] grids;
+		synchronized (this.grids) {
+			grids = this.grids;
+		}
+		// In case of thread blocking, wake up other threads (probably UI) after
+		// assignment is complete
+		this.grids.notifyAll();
+		return grids;
+	}
+	
+	static class SolverThread extends Thread {
+		private List<List<Integer>> grid;
+		private Solver solver;
+		
+		public SolverThread(List<List<Integer>> grid) {
+			this.grid = grid;
+			this.start();
+		}
+		
+		public Solver getSolver() {
+			return this.solver;
+		}
+		
+		@Override
+		public void run() {
+			solver = new Solver(this.grid);
+			solver.solverThread = this;
+			// Heavy lifting here
+			solver.setResult(solver.solve());
+		}
 	}
 }
 
