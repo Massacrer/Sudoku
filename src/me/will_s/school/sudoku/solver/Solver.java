@@ -2,15 +2,16 @@
 package me.will_s.school.sudoku.solver;
 
 import java.util.List;
+import me.will_s.school.sudoku.Grid;
 
 //TODO: javadoc comments
 
 class Solver {
-	private RootNode rootNode;
+	private NodeManager nodeManager;
 	private List<List<Integer>>[] grids;
 	private Thread solverThread;
 	
-	public static SolverThread solve(List<List<Integer>> grid) {
+	public static SolverThread solve(Grid grid) {
 		// run solver in new thread, return solver
 		SolverThread solverThread = new SolverThread(grid);
 		solverThread.start();
@@ -21,15 +22,15 @@ class Solver {
 		return this.solverThread;
 	}
 	
-	private Solver(List<List<Integer>> grid) {
+	private Solver(Grid grid) {
 		grids = null;
-		rootNode = Initialiser.initialise(grid);
+		nodeManager = Initialiser.initialise(grid);
 		return;
 	}
 	
 	// Do not call from main (UI) thread
 	private List<List<Integer>>[] solve() {
-		List<List<Integer>>[] result = DancingLinks.solve(rootNode);
+		List<List<Integer>>[] result = DancingLinks.solve(nodeManager.root);
 		return result;
 	}
 	
@@ -52,27 +53,24 @@ class Solver {
 		this.grids.notifyAll();
 		return grids;
 	}
+}
+
+class SolverThread extends Thread {
+	private Grid grid;
+	private Solver solver;
 	
-	static class SolverThread extends Thread {
-		private List<List<Integer>> grid;
-		private Solver solver;
-		
-		public SolverThread(List<List<Integer>> grid) {
-			this.grid = grid;
-			this.start();
-		}
-		
-		public Solver getSolver() {
-			return this.solver;
-		}
-		
-		@Override
-		public void run() {
-			solver = new Solver(this.grid);
-			solver.solverThread = this;
-			// Heavy lifting here
-			solver.setResult(solver.solve());
-		}
+	public SolverThread(Grid grid) {
+		this.grid = grid;
+		this.start();
+	}
+	
+	public Solver getSolver() {
+		return this.solver;
+	}
+	
+	@Override
+	public void run() {
+
 	}
 }
 
@@ -82,7 +80,7 @@ class SolutionPart {
 	// Using short to save space, using bit shifting to store 3 values (row,
 	// column, value, each in range 1 <= x <= 9)
 	// Assigning 4 bytes to each int, so max unsigned value of each variable =
-	// 2^4 = 16
+	// 2^4 - 1 = 15
 	// Order of storage (msb -> lsb) is row, column, value
 	// So data bytes in short looks like 0000rrrrccccvvvv
 	private short info = 0;

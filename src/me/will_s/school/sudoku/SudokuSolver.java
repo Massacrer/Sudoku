@@ -4,6 +4,7 @@ package me.will_s.school.sudoku;
 import android.os.Bundle;
 import android.app.Activity;
 import android.view.Menu;
+import android.view.MenuItem;
 
 public class SudokuSolver extends Activity {
 	
@@ -16,6 +17,14 @@ public class SudokuSolver extends Activity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.activity_main, menu);
+		return true;
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+			
+		}
 		return true;
 	}
 }

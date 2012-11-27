@@ -4,6 +4,12 @@ package me.will_s.school.sudoku.solver;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The fundamental component of the doubly circularly linked list, a Node
+ * represents a connection between a constraint and a solution part that
+ * satisfies it. See the methods of {@link Initialiser} and {@link Solver} for
+ * use of nodes
+ */
 class Node {
 	public HeaderNode head;
 	public Node up;
@@ -14,7 +20,7 @@ class Node {
 	// Constructor time
 	// TODO: implement as few constructors as possible
 	
-	// Ensure all callers set this.head
+	// All callers must set this.head
 	protected Node() {
 		this.head = null;
 		this.up = this;
@@ -46,9 +52,16 @@ class Node {
 	 */
 }
 
+/**
+ * Extension of {@link Node} that serves as a column header. This type has an
+ * identifier in the form of a {@link SolutionPart} that identifies the row,
+ * column and value this node's column represents. It also has an integer
+ * specifying the current number of nodes in the column, which is a heuristic
+ * for improving the speed of the {@link Solver} methods
+ */
 class HeaderNode extends Node {
-	public SolutionPart solutionPartId;
-	public int size;
+	public SolutionPart solutionPart;
+	public short size;
 	
 	protected HeaderNode() {
 		super();
@@ -60,11 +73,18 @@ class HeaderNode extends Node {
 		this.right = right;
 		this.up = this;
 		this.down = this;
-		this.solutionPartId = part;
-		this.size = 0;
+		this.solutionPart = part;
+		this.size = 4; // Every column starts with 4 nodes, see
+						// Initialiser.linkConstraints
 	}
 }
 
+/**
+ * A special node that represents the entire list structure. It is linked
+ * horizontally with the {@link HeaderNode}s, but is the only node in its
+ * column. This is the node that is passed to any method that needs to deal with
+ * the list structure.
+ */
 class RootNode extends HeaderNode {
 	
 	RootNode() {
@@ -73,15 +93,20 @@ class RootNode extends HeaderNode {
 		this.down = this;
 		this.left = this;
 		this.right = this;
-		this.solutionPartId = null;
+		this.solutionPart = null;
 		this.size = 0;
 	}
 }
 
+/**
+ * Class used to hold strong references to all nodes in the list structure, to
+ * prevent them being garbage collected during operation of the {@link Solver}
+ * methods
+ */
 class NodeManager {
-	RootNode root;
-	List<HeaderNode> headers;
-	List<Node> nodes;
+	final RootNode root;
+	final List<HeaderNode> headers;
+	final List<Node> nodes;
 	
 	public NodeManager() {
 		root = new RootNode();
