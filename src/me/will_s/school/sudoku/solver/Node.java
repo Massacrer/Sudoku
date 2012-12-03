@@ -16,6 +16,7 @@ class Node {
 	public Node down;
 	public Node left;
 	public Node right;
+	public short number;
 	
 	// Constructor time
 	// TODO: implement as few constructors as possible
@@ -27,11 +28,13 @@ class Node {
 		this.down = this;
 		this.left = this;
 		this.right = this;
+		this.number = 0;
 	}
 	
-	public Node(HeaderNode head) {
+	public Node(HeaderNode head, short number) {
 		this();
 		this.head = head;
+		this.number = number;
 		head.size++;
 	}
 	
@@ -60,22 +63,19 @@ class Node {
  * for improving the speed of the {@link Solver} methods
  */
 class HeaderNode extends Node {
-	public SolutionPart solutionPart;
 	public short size;
 	
 	protected HeaderNode() {
 		super();
 	}
 	
-	public HeaderNode(HeaderNode left, HeaderNode right, SolutionPart part) {
+	public HeaderNode(HeaderNode left, HeaderNode right, int hash) {
 		this.head = this;
 		this.left = left;
 		this.right = right;
 		this.up = this;
 		this.down = this;
-		this.solutionPart = part;
-		this.size = 4; // Every column starts with 4 nodes, see
-						// Initialiser.linkConstraints
+		this.size = 0;
 	}
 }
 
@@ -93,7 +93,7 @@ class RootNode extends HeaderNode {
 		this.down = this;
 		this.left = this;
 		this.right = this;
-		this.solutionPart = null;
+		// this.solutionPart = 0;
 		this.size = 0;
 	}
 }

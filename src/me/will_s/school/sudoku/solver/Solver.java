@@ -8,7 +8,7 @@ import me.will_s.school.sudoku.Grid;
 
 class Solver {
 	private NodeManager nodeManager;
-	private List<List<Integer>>[] grids;
+	private List<Grid> grids;
 	private Thread solverThread;
 	
 	public static SolverThread solve(Grid grid) {
@@ -29,12 +29,12 @@ class Solver {
 	}
 	
 	// Do not call from main (UI) thread
-	private List<List<Integer>>[] solve() {
-		List<List<Integer>>[] result = DancingLinks.solve(nodeManager.root);
+	private List<Grid> solve() {
+		List<Grid> result = new DLXImpl(nodeManager).solve();
 		return result;
 	}
 	
-	private void setResult(List<List<Integer>>[] grids) {
+	private void setResult(List<Grid> grids) {
 		synchronized (this.grids) {
 			this.grids = grids;
 		}
@@ -43,8 +43,8 @@ class Solver {
 		this.grids.notifyAll();
 	}
 	
-	public List<List<Integer>>[] getResult() {
-		List<List<Integer>>[] grids;
+	public List<Grid> getResult() {
+		List<Grid> grids;
 		synchronized (this.grids) {
 			grids = this.grids;
 		}
@@ -70,7 +70,7 @@ class SolverThread extends Thread {
 	
 	@Override
 	public void run() {
-
+		
 	}
 }
 
@@ -86,6 +86,14 @@ class SolutionPart {
 	private short info = 0;
 	
 	public SolutionPart(int r, int c, int v) {
+		this.info = getSolutionPart(r, c, v);
+	}
+	
+	public SolutionPart(short number) {
+		this.info = number;
+	}
+	
+	public static short getSolutionPart(int r, int c, int v) {
 		// Make sure all 3 values are sane for the grid size, and can be stored
 		// in 4 bytes.
 		if ((r < 1) || (r > 9) || (c < 1) || (c > 9) || (v < 1) || (v > 9)) {
@@ -100,7 +108,7 @@ class SolutionPart {
 		v = v & 0x0000000f;
 		
 		short i = (short) ((r << 8) | (c << 4) | (v));
-		info = i;
+		return i;
 	}
 	
 	public int getRow() {
