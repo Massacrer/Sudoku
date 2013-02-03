@@ -156,6 +156,7 @@ public class TestInterface {
 	}
 	
 	void enterValue(String[] in) {
+		// syntax: "e r c v"
 		if (in.length == 4) {
 			try {
 				int r = Integer.parseInt(in[1]);
@@ -167,7 +168,17 @@ public class TestInterface {
 				System.out.println("Invalid input format");
 			}
 		}
-		System.out.println("Syntax: e row col val");
+		// syntax: "e rcv"
+		if (in.length == 2 && in[1].length() == 3) {
+			char[] chars = in[1].toCharArray();
+			// Minor code reuse time, better than method call overhead (?)
+			int r = Integer.parseInt(String.valueOf(chars[0]));
+			int c = Integer.parseInt(String.valueOf(chars[1]));
+			int v = Integer.parseInt(String.valueOf(chars[2]));
+			grids.get(0).set(r - 1, c - 1, v);
+			return;
+		}
+		System.out.println("Syntax: \"e row col val\" or \"e rcv\"");
 		
 	}
 	
