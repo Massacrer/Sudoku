@@ -2,7 +2,6 @@ package me.will_s.school.sudoku;
 
 // TODO: check for initialisation of things here
 public class Grid {
-	private final int size;
 	private final int[][] grid;
 	
 	/**
@@ -10,7 +9,6 @@ public class Grid {
 	 *            The size of the grid to construct
 	 */
 	public Grid(int size) {
-		this.size = size;
 		grid = new int[size][size];
 	}
 	
