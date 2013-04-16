@@ -7,21 +7,26 @@ import java.util.Stack;
 import me.will_s.school.sudoku.Grid;
 import me.will_s.school.sudoku.TestInterface;
 
+/**
+ * Implementation of the DLX algorithm
+ */
 public class DLXImpl {
-	private final Stack<Node> solutionParts;
+	private final Stack<Short> solutionParts;
 	private final List<Grid> solutions;
 	private boolean interrupted;
 	private int level;
 	private List<Node> emptyColumns;
+	private final int minLevel;
 	
 	private final RootNode root;
 	
 	public DLXImpl(NodeManager nodeManager) {
-		this.solutionParts = nodeManager.preExistingSolutionParts;
+		this.solutionParts = nodeManager.existingSolutionParts;
 		this.solutions = new ArrayList<Grid>(1);
 		this.interrupted = false;
 		this.root = nodeManager.root;
 		this.level = this.solutionParts.size();// + 1;
+		this.minLevel = this.solutionParts.size();
 	}
 	
 	public List<Grid> solve() {
@@ -33,10 +38,21 @@ public class DLXImpl {
 	
 	private void algorithmX() {
 		
+		// Day 4042
+		//
+		// I currently have no idea how to prevent the situation that the
+		// algorithm removes one of the pre-existing solution parts from the
+		// stack, so I will simply monitor to see if it ever actually happens
+		
+		if (this.level < this.minLevel && TestInterface.DEBUG) {
+			System.out.println("WARNING: currently at level " + this.level
+					+ ", but minLevel = " + this.minLevel);
+		}
+		
 		// Check for interrupts, indicating we should abort
 		if (Thread.interrupted()) {
 			this.interrupted = true;
-			if (Solver.DEBUG) {
+			if (TestInterface.DEBUG) {
 				TestInterface.dbgout("Thread interrupt received");
 				this.writeStack();
 			}
@@ -50,7 +66,7 @@ public class DLXImpl {
 		}
 		
 		//
-		if (Solver.DEBUG) {
+		if (TestInterface.DEBUG) {
 			TestInterface.divide();
 			// Must not try to get more than 81 solution parts
 			if (this.level >= 81) {
@@ -64,7 +80,7 @@ public class DLXImpl {
 		// Make sure this state can be used to proceed
 		this.emptyColumns = this.getEmptyColumns();
 		if (emptyColumns != null) {
-			if (Solver.DEBUG) {
+			if (TestInterface.DEBUG) {
 				TestInterface.dbgout("Level " + this.level
 						+ " is not progressable, backtracking");
 				String out = new String("Empty columns ("
@@ -95,7 +111,7 @@ public class DLXImpl {
 		HeaderNode column = getNextColumn(root);
 		// Iterate over unsatisfied constraints (columns)
 		do {
-			if (Solver.DEBUG) {
+			if (TestInterface.DEBUG) {
 				TestInterface.dbgout("Trying column "
 						+ column.getNumberString());
 			}
@@ -111,7 +127,7 @@ public class DLXImpl {
 				// Return if interrupted. This propogates up the stack, as
 				// this.interrupted is never set false again
 				if (this.interrupted) {
-					if (Solver.DEBUG) {
+					if (TestInterface.DEBUG) {
 						TestInterface.dbgout("Aborting now due to interrupt (level "
 								+ this.level + ")");
 					}
@@ -119,7 +135,7 @@ public class DLXImpl {
 				}
 				
 				// Debug - print constraint under consideration
-				if (Solver.DEBUG) {
+				if (TestInterface.DEBUG) {
 					TestInterface.dbgout("Trying solution part "
 							+ nodeInColumn.getNumberString());
 					/*
@@ -135,11 +151,7 @@ public class DLXImpl {
 				}
 				
 				// Add the solution part to the complete solution
-				solutionParts.push(nodeInColumn);
-				
-				// debug
-				
-				// TestInterface.printGrid(getCurrentGridState());
+				solutionParts.push(nodeInColumn.solutionPart);
 				
 				Node rowNode;
 				
@@ -151,6 +163,13 @@ public class DLXImpl {
 				} while (rowNode != nodeInColumn);
 				
 				this.level++;
+				
+				// TODO: remove when done
+				System.out.println("Entering level " + this.level
+						+ " satisfying constraint " + column.getNumberString()
+						+ " with " + nodeInColumn.getNumberString());
+				
+				TestInterface.printGrid(getCurrentGridState());
 				
 				// oh boy, here we go
 				// Recurse with new state, to satisfy next constraint
@@ -193,8 +212,8 @@ public class DLXImpl {
 	private void writeStack() {
 		TestInterface.dbgout("Current solution parts ("
 				+ this.solutionParts.size() + "): ");
-		for (Node n : this.solutionParts) {
-			TestInterface.dbgout("\t" + n.toString());
+		for (Short s : this.solutionParts) {
+			TestInterface.dbgout("\t" + new SolutionPart(s).toString());
 		}
 	}
 	
@@ -235,16 +254,16 @@ public class DLXImpl {
 	
 	private Grid getCurrentGridState() {
 		Grid grid = new Grid(9);
-		for (Node n : this.solutionParts) {
-			SolutionPart sp = n.getSolutionPart();
-			grid.set(sp.getA(), sp.getB(), sp.getC());
+		for (Short s : this.solutionParts) {
+			SolutionPart part = new SolutionPart(s);
+			grid.set(part.getA(), part.getB(), part.getC());
 		}
 		return grid;
 	}
 	
 	private void addCurrentAsSolution() {
 		this.solutions.add(getCurrentGridState());
-		if (Solver.DEBUG) {
+		if (TestInterface.DEBUG) {
 			TestInterface.dbgout("Adding current stack as complete solution:");
 			this.writeStack();
 		}
@@ -266,16 +285,22 @@ public class DLXImpl {
 		head.right.left = head.left;
 		head.left.right = head.right;
 		// Select each row that satisfies this column
-		for (Node node = head.down; node != head; node = node.down) {
+		Node node = head.down;
+		while (node != head) {
 			// Select each node in the row EXCEPT the one in the covered column.
 			// These can be left as the column itself is removed, and must be
 			// left to allow uncover() to find these rows again
-			for (Node rowNode = node.right; rowNode != node; rowNode = rowNode.right) {
+			Node rowNode = node.right;
+			while (rowNode != node) {
 				// Remove this node from its column
 				rowNode.up.down = rowNode.down;
 				rowNode.down.up = rowNode.up;
 				rowNode.head.size--;
+				// Next rowNode
+				rowNode = rowNode.right;
 			}
+			// Next node
+			node = node.down;
 		}
 	}
 	
@@ -287,13 +312,19 @@ public class DLXImpl {
 	 */
 	static void uncover(HeaderNode head) {
 		// Loop through column to uncover in reverse order
-		for (Node node = head.up; node != head; node = node.up) {
+		Node node = head.up;
+		while (node != head) {
 			// Select each (currently vertically isolated) node in the row
-			for (Node rowNode = node.left; rowNode != node; rowNode = rowNode.left) {
+			Node rowNode = node.left;
+			while (rowNode != node) {
 				rowNode.up.down = rowNode;
 				rowNode.down.up = rowNode;
 				rowNode.head.size++;
+				// Next rowNode
+				rowNode = rowNode.left;
 			}
+			// Next node
+			node = node.up;
 		}
 		head.left.right = head;
 		head.right.left = head;
