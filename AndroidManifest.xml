@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="me.will_s.school.sudoku"
     android:versionCode="1"
-    android:versionName="1.0" >
+    android:versionName="1.0" android:installLocation="auto">
 
     <uses-sdk
         android:minSdkVersion="10"
@@ -31,6 +31,7 @@
             android:name="me.will_s.school.sudoku.Preferences"
             android:label="@string/title_activity_preferences" >
         </activity>
+        <activity android:name="me.will_s.school.sudoku.SavedGridsManager" android:label="@string/title_activity_saved_grids_manager"></activity>
     </application>
 
 </manifest>

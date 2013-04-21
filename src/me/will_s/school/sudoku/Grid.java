@@ -1,7 +1,12 @@
 package me.will_s.school.sudoku;
 
+import java.io.Serializable;
+
 /** Class to describe the placement of numbers in a Sudoku grid */
-public class Grid {
+public class Grid implements Serializable {
+	/** Java serial version unique ID, used by JVM IO to determine if class
+	 * version is correct for deserialisation */
+	private static final long serialVersionUID = 1L;
 	/** The array to hold the values of the grid */
 	private final int[][] grid;
 	

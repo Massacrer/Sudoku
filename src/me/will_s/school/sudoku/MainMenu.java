@@ -4,7 +4,6 @@ package me.will_s.school.sudoku;
 import android.os.Bundle;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -38,7 +37,7 @@ public class MainMenu extends Activity {
 		this.gridGenerateButton.setOnClickListener(new UnimplementedButtonHandler());
 		this.gridEntryButton.setOnClickListener(new GridEntryButtonHandler());
 		this.gridOptionsButton.setOnClickListener(new SettingsButtonHandler());
-		this.gridManagerButton.setOnClickListener(new UnimplementedButtonHandler());
+		this.gridManagerButton.setOnClickListener(new SavedGridsManagerButtonHandler());
 	}
 	
 	@Override
@@ -55,7 +54,8 @@ public class MainMenu extends Activity {
 						Toast.LENGTH_SHORT).show();
 				return true;
 			case R.id.menu_settings:
-				// ...
+				Intent intent = new Intent(this, Preferences.class);
+				this.startActivity(intent);
 				return true;
 			default:
 				return super.onOptionsItemSelected(item);
@@ -73,8 +73,16 @@ public class MainMenu extends Activity {
 	
 	/** Callback handler for {@code gridOptionsButton} */
 	private class SettingsButtonHandler implements OnClickListener {
-		public void onClick(View v) {
+		public void onClick(View view) {
 			Intent intent = new Intent(MainMenu.this, Preferences.class);
+			MainMenu.this.startActivity(intent);
+		}
+	}
+	
+	/** Callback handler for {@code gridManagerButton} */
+	private class SavedGridsManagerButtonHandler implements OnClickListener {
+		public void onClick(View view) {
+			Intent intent = new Intent(MainMenu.this, SavedGridsManager.class);
 			MainMenu.this.startActivity(intent);
 		}
 	}

@@ -44,6 +44,12 @@ public class Solver {
 		return solver;
 	}
 	
+	/** @return True if this solver is currently managing a running
+	 *         {@link SolverThread}, false otherwise. */
+	public boolean isRunning() {
+		return this.solverThread.isAlive();
+	}
+	
 	/** Causes the {@link SolverThread} managed by this instance to terminate
 	 * fairly quickly and painlessly. */
 	public void abortSolve() {
